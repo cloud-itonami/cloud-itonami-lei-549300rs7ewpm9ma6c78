@@ -1,0 +1,5 @@
+[["synchrony-site-1" :site/url "https://www.synchrony.com" 1 :add]
+ ["synchrony-site-1" :site/checked-at "2026-07-18" 1 :add]
+ ["synchrony-site-1" :site/http-status 200 1 :add]
+ ["synchrony-site-1" :site/title "Credit Cards, Financing, Marketplace, Banking & More - Synchrony" 1 :add]
+ ["synchrony-site-1" :site/description "Find great deals, promotional offers, credit cards, savings products, payment solutions, and more. See how Synchrony can help you today!" 1 :add]]
