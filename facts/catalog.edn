@@ -1,0 +1,264 @@
+;; Verified public-register citations for the legal entity archived by this repository.
+;;
+;; Every row is checked live by tools/verify_citations.cljs:
+;;   * GET :cite/url must answer HTTP 2xx
+;;   * :cite/expect-substring must appear in the response body
+;;
+;; A URL that cannot be fetched, or whose body no longer carries the claim, is a
+;; DRIFT and fails the gate. Nothing is recorded here that was not retrieved.
+;;
+;; Three independent authorities are cited, not one: GLEIF (the global LEI
+;; system), the Federal Deposit Insurance Corporation (the US federal deposit
+;; insurer, which is the registration authority GLEIF names as having validated
+;; the subsidiary bank's LEI), and the Securities and Exchange Commission (the
+;; US federal securities regulator this entity files with).
+;;
+;; The FDIC and SEC rows are what make this more than a GLEIF mirror. Two joins
+;; are load-bearing and are checkable only against those authorities' own bodies:
+;;
+;;   * FDIC certificate 27314. GLEIF records the subsidiary Synchrony Bank as
+;;     validated at RA000744 (= FDIC) under registration id 27314. The FDIC's
+;;     own API, asked for CERT 27314, returns Synchrony Bank AND names its
+;;     holding company as SYNCHRONY FINANCIAL. So the parent-child edge GLEIF
+;;     asserts is corroborated by a regulator that does not source it from GLEIF.
+;;
+;;   * 777 Long Ridge Road. GLEIF gives this as the headquarters address; SEC
+;;     EDGAR gives the same street as the filer's business address, from a
+;;     filing chain that is independent of the LEI system.
+;;
+;; Substrings are chosen from the RAW response body. The FDIC and GLEIF spell
+;; the same Utah street differently (170 W Election Rd vs 170 West Election
+;; Road), so each row matches the spelling its own authority publishes rather
+;; than a normalised form -- normalising here would hide which body was read.
+;;
+;; Deliberately NOT cited, and why:
+;;
+;;   * www.sec.gov (browse-edgar and /Archives) answers HTTP 403 to automated
+;;     clients at the edge. Measured 2026-08-20 with three different user
+;;     agents, including a descriptive one: all three 403. This is not a
+;;     user-agent policy that could be satisfied by declaring traffic, so the
+;;     HTML surface is left out. data.sec.gov, the SEC's data API, answers 200
+;;     and is what the SEC rows below use.
+;;   * opencorporates.com, which GLEIF's ocid field points at (us_de/3703204),
+;;     serves an hCaptcha challenge instead of the record. Working around a
+;;     CAPTCHA is out of bounds, so the row is left out rather than recorded as
+;;     a citation the gate cannot check.
+;;   * www.ffiec.gov (National Information Center) answers 403 likewise.
+;;   * www.nyse.com/quote/XNYS:SYF answers 200 but renders via JavaScript; the
+;;     delivered body contains no occurrence of the company name, so there is
+;;     no substring a body check could honestly assert.
+;;   * SEC EDGAR's submissions metadata carries stateOfIncorporation NY, which
+;;     disagrees with GLEIF's US-DE jurisdiction and with the Delaware file
+;;     number below. The disagreement is real and was measured, but adjudicating
+;;     it needs the 10-K cover page, which sits behind the 403 above. It is
+;;     recorded here as an open question rather than asserted as a citation.
+;;   * www.synchrony.com's own Terms of Use is not a register and is not cited.
+;;     80-data/public/tos.journal.edn keeps the archived text and its retrieval
+;;     date.
+;;
+;; Independent third-party archive. Not affiliated with, endorsed by, or
+;; sponsored by Synchrony Financial.
+
+{:catalog/subject
+ {:company/legal-name   "SYNCHRONY FINANCIAL"
+  :company/lei          "549300RS7EWPM9MA6C78"
+  :company/jurisdiction "US-DE"
+  :company/business-id  "3703204"
+  :company/legal-form-elf "XTIQ"
+  :company/sec-cik      "0001601712"
+  :company/website      "https://www.synchrony.com"}
+
+ :catalog/retrieved "2026-08-20T08:45:00Z"
+
+ :catalog/entries
+ [{:cite/id "gleif-lei-record"
+   :cite/authority :gleif
+   :cite/claim "GLEIF publishes LEI 549300RS7EWPM9MA6C78 with legal name SYNCHRONY FINANCIAL, jurisdiction US-DE, entity status ACTIVE and registration status ISSUED."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78"
+   :cite/expect-substring "SYNCHRONY FINANCIAL"}
+
+  {:cite/id "gleif-corroboration-level"
+   :cite/authority :gleif
+   :cite/claim "That record carries corroboration level FULLY_CORROBORATED, meaning GLEIF validated it against a public authority rather than against the registrant's own say-so."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78"
+   :cite/expect-substring "FULLY_CORROBORATED"}
+
+  {:cite/id "gleif-registered-as-delaware-file-number"
+   :cite/authority :gleif
+   :cite/claim "The same record carries trade-register id 3703204, the Delaware Division of Corporations file number the LEI was validated against."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78"
+   :cite/expect-substring "3703204"}
+
+  {:cite/id "gleif-legal-address-registered-agent"
+   :cite/authority :gleif
+   :cite/claim "The registered legal address is care of The Corporation Trust Company, 1209 Orange St, Wilmington, US-DE 19801 -- a Delaware registered-agent address, not an operating site."
+   :cite/url "https://api.gleif.org/api/v1/lei-records?filter%5Blei%5D=549300RS7EWPM9MA6C78"
+   :cite/expect-substring "1209 ORANGE ST"}
+
+  {:cite/id "gleif-headquarters-address"
+   :cite/authority :gleif
+   :cite/claim "The headquarters address is 777 Long Ridge Road, Stamford, US-CT 06902. This is the join key to the SEC business-address row below."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78"
+   :cite/expect-substring "777 LONG RIDGE ROAD"}
+
+  {:cite/id "gleif-registration-authority-ra000602"
+   :cite/authority :gleif
+   :cite/claim "The registration authority recorded on the LEI, RA000602, is the Division of Corporations, Department of State, of Delaware."
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "Division of Corporations, Department of State"}
+
+  {:cite/id "gleif-registration-authority-delaware-endpoint"
+   :cite/authority :gleif
+   :cite/claim "GLEIF names corp.delaware.gov as that authority's public service. Delaware's own entity search is gated by a CAPTCHA, which is why the Delaware file number above is cited from GLEIF and not from the state directly."
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "corp.delaware.gov"}
+
+  {:cite/id "gleif-entity-legal-form-xtiq"
+   :cite/authority :gleif
+   :cite/claim "The reported ELF code XTIQ resolves to the Delaware legal form Corporation, status ACTV."
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "Corporation"}
+
+  {:cite/id "gleif-entity-legal-form-jurisdiction"
+   :cite/authority :gleif
+   :cite/claim "That same ELF entry is scoped to jurisdiction Delaware, corroborating the US-DE jurisdiction on the LEI record from the legal-form table rather than from the record itself."
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "Delaware"}
+
+  {:cite/id "gleif-managing-lou-accreditation"
+   :cite/authority :gleif
+   :cite/claim "The LEI is maintained by managing LOU 5493001KJTIIGC8Y1R12, Bloomberg Finance L.P., listed by GLEIF as an accredited LEI issuer."
+   :cite/url "https://api.gleif.org/api/v1/lei-issuers/5493001KJTIIGC8Y1R12"
+   :cite/expect-substring "Bloomberg Finance L.P."}
+
+  {:cite/id "gleif-managing-lou-accreditation-date"
+   :cite/authority :gleif
+   :cite/claim "That issuer's accreditation date is 2017-04-13, which predates this LEI's last update and so covers the current record."
+   :cite/url "https://api.gleif.org/api/v1/lei-issuers/5493001KJTIIGC8Y1R12"
+   :cite/expect-substring "2017-04-13"}
+
+  {:cite/id "gleif-lei-issuer-relationship"
+   :cite/authority :gleif
+   :cite/claim "The LEI record's own lei-issuer relationship resolves to the same issuer, so the issuer is reachable from the subject record without knowing the LOU id in advance."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78/lei-issuer"
+   :cite/expect-substring "Bloomberg Finance L.P."}
+
+  {:cite/id "gleif-direct-parent-reporting-exception"
+   :cite/authority :gleif
+   :cite/claim "SYNCHRONY FINANCIAL reports no direct accounting consolidation parent, with reason NATURAL_PERSONS -- no legal entity consolidates it. It is a parent, not a subsidiary."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78/direct-parent-reporting-exception"
+   :cite/expect-substring "NATURAL_PERSONS"}
+
+  {:cite/id "gleif-ultimate-parent-reporting-exception"
+   :cite/authority :gleif
+   :cite/claim "The same exception is filed at the ultimate level, category ULTIMATE_ACCOUNTING_CONSOLIDATION_PARENT, confirming nothing consolidates it above the direct level either."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78/ultimate-parent-reporting-exception"
+   :cite/expect-substring "ULTIMATE_ACCOUNTING_CONSOLIDATION_PARENT"}
+
+  {:cite/id "gleif-direct-children-synchrony-bank"
+   :cite/authority :gleif
+   :cite/claim "GLEIF lists Synchrony Bank (LEI 549300UATVPGSLE43Z27) among the direct children of this LEI. This is the edge the FDIC rows below corroborate independently."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78/direct-children"
+   :cite/expect-substring "Synchrony Bank"}
+
+  {:cite/id "gleif-direct-child-relationship-type"
+   :cite/authority :gleif
+   :cite/claim "The relationship records behind those children give the type explicitly as IS_DIRECTLY_CONSOLIDATED_BY, so the edge is an accounting-consolidation claim and not a loose affiliation."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78/direct-child-relationships"
+   :cite/expect-substring "IS_DIRECTLY_CONSOLIDATED_BY"}
+
+  {:cite/id "gleif-child-bank-registered-as-fdic-cert"
+   :cite/authority :gleif
+   :cite/claim "The child bank's own LEI record is validated at registration authority RA000744 under registration id 27314. That id is an FDIC certificate number, and it is the join key to the FDIC rows below."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300UATVPGSLE43Z27"
+   :cite/expect-substring "27314"}
+
+  {:cite/id "gleif-registration-authority-ra000744-is-fdic"
+   :cite/authority :gleif
+   :cite/claim "RA000744 resolves to the Federal Deposit Insurance Corporation, so the identifier above is an FDIC certificate and not an arbitrary local id."
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000744"
+   :cite/expect-substring "Federal Deposit Insurance Corporation"}
+
+  {:cite/id "gleif-registration-authority-fdic-endpoint"
+   :cite/authority :gleif
+   :cite/claim "GLEIF names banks.data.fdic.gov as that authority's public service, which is the host the FDIC citations below are retrieved from. The second authority is reached by following GLEIF's own pointer, not by picking a source that happened to agree."
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000744"
+   :cite/expect-substring "banks.data.fdic.gov"}
+
+  {:cite/id "gleif-isin-common-stock"
+   :cite/authority :gleif
+   :cite/claim "GLEIF maps this LEI to its ISINs, including US87165B1035, the common share line quoted as SYF."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300RS7EWPM9MA6C78/isins"
+   :cite/expect-substring "US87165B1035"}
+
+  {:cite/id "gleif-bic-reverse-lookup"
+   :cite/authority :gleif
+   :cite/claim "Asked by BIC rather than by LEI, GLEIF returns this same entity for SYFNUS33XXX, so the BIC-to-LEI mapping resolves in both directions."
+   :cite/url "https://api.gleif.org/api/v1/lei-records?filter%5Bbic%5D=SYFNUS33XXX"
+   :cite/expect-substring "SYFNUS33XXX"}
+
+  {:cite/id "fdic-cert-27314-is-synchrony-bank"
+   :cite/authority :us-fdic
+   :cite/claim "The FDIC, asked for certificate 27314, returns Synchrony Bank -- the certificate number GLEIF recorded on the child LEI resolves at the FDIC to the same institution."
+   :cite/url "https://banks.data.fdic.gov/api/institutions?filters=CERT:27314&fields=NAME,CERT,NAMEHCR,RSSDHCR,ESTYMD,ADDRESS,CITY,STALP,ACTIVE&format=json"
+   :cite/expect-substring "Synchrony Bank"}
+
+  {:cite/id "fdic-holding-company-is-the-subject"
+   :cite/authority :us-fdic
+   :cite/claim "The FDIC records that institution's holding company as SYNCHRONY FINANCIAL. This corroborates the parent-child edge from a US federal regulator that does not source it from GLEIF, and is the single strongest non-GLEIF claim in this catalog."
+   :cite/url "https://banks.data.fdic.gov/api/institutions?filters=CERT:27314&fields=NAME,CERT,NAMEHCR,RSSDHCR,ESTYMD,ADDRESS,CITY,STALP,ACTIVE&format=json"
+   :cite/expect-substring "SYNCHRONY FINANCIAL"}
+
+  {:cite/id "fdic-holding-company-rssd"
+   :cite/authority :us-fdic
+   :cite/claim "The FDIC gives the holding company a Federal Reserve RSSD id of 4504654, a third identifier for the subject entity alongside its LEI and its SEC CIK."
+   :cite/url "https://banks.data.fdic.gov/api/institutions?filters=CERT:27314&fields=NAME,CERT,NAMEHCR,RSSDHCR,ESTYMD,ADDRESS,CITY,STALP,ACTIVE&format=json"
+   :cite/expect-substring "4504654"}
+
+  {:cite/id "fdic-bank-address"
+   :cite/authority :us-fdic
+   :cite/claim "The FDIC gives the bank's address as 170 W Election Rd, Draper, UT. GLEIF spells the same street 170 West Election Road; each row matches its own authority's spelling."
+   :cite/url "https://banks.data.fdic.gov/api/institutions?filters=CERT:27314&fields=NAME,CERT,NAMEHCR,RSSDHCR,ESTYMD,ADDRESS,CITY,STALP,ACTIVE&format=json"
+   :cite/expect-substring "170 W Election Rd"}
+
+  {:cite/id "fdic-bank-established-1988"
+   :cite/authority :us-fdic
+   :cite/claim "The FDIC gives the bank an establishment date of 08/01/1988, twenty-six years before the holding company's LEI was first issued in 2014. Only the deposit-insurance register carries that date."
+   :cite/url "https://banks.data.fdic.gov/api/institutions?filters=CERT:27314&fields=NAME,CERT,NAMEHCR,RSSDHCR,ESTYMD,ADDRESS,CITY,STALP,ACTIVE&format=json"
+   :cite/expect-substring "08/01/1988"}
+
+  {:cite/id "gleif-child-bank-address"
+   :cite/authority :gleif
+   :cite/claim "GLEIF's own headquarters address for the child bank is 170 West Election Road, Draper, US-UT -- the same site the FDIC row above reports, reached from the LEI side."
+   :cite/url "https://api.gleif.org/api/v1/lei-records/549300UATVPGSLE43Z27"
+   :cite/expect-substring "170 West Election Road"}
+
+  {:cite/id "sec-edgar-cik-0001601712"
+   :cite/authority :us-sec
+   :cite/claim "The SEC publishes EDGAR submissions for CIK 0001601712 under the name Synchrony Financial, an operating entity with SIC 6199 (Finance Services)."
+   :cite/url "https://data.sec.gov/submissions/CIK0001601712.json"
+   :cite/expect-substring "Synchrony Financial"}
+
+  {:cite/id "sec-edgar-business-address"
+   :cite/authority :us-sec
+   :cite/claim "EDGAR gives that filer's business address as 777 LONG RIDGE ROAD, STAMFORD, CT -- the same street GLEIF reports as headquarters, from an independent filing chain."
+   :cite/url "https://data.sec.gov/submissions/CIK0001601712.json"
+   :cite/expect-substring "777 LONG RIDGE ROAD"}
+
+  {:cite/id "sec-edgar-ein"
+   :cite/authority :us-sec
+   :cite/claim "EDGAR carries IRS employer identification number 510483352 for this filer, a US federal tax identifier that appears in no GLEIF field."
+   :cite/url "https://data.sec.gov/submissions/CIK0001601712.json"
+   :cite/expect-substring "510483352"}
+
+  {:cite/id "sec-edgar-preferred-ticker-nyse"
+   :cite/authority :us-sec
+   :cite/claim "EDGAR lists the NYSE tickers SYF, SYF-PA and SYF-PB. The preferred line SYF-PA is matched rather than the bare SYF, which is too short to identify anything in a body this size."
+   :cite/url "https://data.sec.gov/submissions/CIK0001601712.json"
+   :cite/expect-substring "SYF-PA"}
+
+  {:cite/id "sec-xbrl-facts-attributed-to-subject"
+   :cite/authority :us-sec
+   :cite/claim "The SEC's XBRL company-concept API attributes us-gaap Assets facts to entityName Synchrony Financial under the same CIK, so the financial-reporting surface and the filer metadata name the same entity."
+   :cite/url "https://data.sec.gov/api/xbrl/companyconcept/CIK0001601712/us-gaap/Assets.json"
+   :cite/expect-substring "Synchrony Financial"}]}
